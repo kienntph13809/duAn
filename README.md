@@ -1,1 +1,1 @@
-Chiến hết Mình nha ae
+CHIẾN HẾT MÌNH NHA AE
