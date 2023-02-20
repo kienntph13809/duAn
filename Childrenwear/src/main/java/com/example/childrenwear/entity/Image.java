@@ -4,24 +4,23 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.List;
-
 @SuppressWarnings("serial")
 @Data
 @Entity
-@Table(name = "category_lv2")
-public class Category_lv2 implements Serializable {
+@Table(name = "image")
+public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
+    private String url;
     @Column(name = "isDelete")
     private Boolean isDelete = false;
-    @ManyToOne
-    @JoinColumn(name = "idcategory")
-    private Category category;
+
     @JsonIgnore
-    @OneToMany(mappedBy = "categorylv2")
-    private List<Product> products;
+    @ManyToOne
+    @JoinColumn(name = "idProduct")
+    private Product product;
 }
