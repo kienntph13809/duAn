@@ -1,10 +1,12 @@
 package com.example.childrenwear.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @SuppressWarnings("serial")
 @Data
@@ -24,7 +26,17 @@ public class Product implements Serializable {
     private String status; // trạng thái
     private String description;//mô tả
     private String descriptionDetail;//mô tả chi tiết
+    @Column(name = "isDelete")
+    private Boolean isDelete = false;
+    @ManyToOne
+    @JoinColumn(name = "idCategorylv2")
+    private Category_lv2 categorylv2;
 
-
+    @JsonIgnore
+    @OneToMany(mappedBy = "product")
+    private List<Quantity> quantities;
+    @JsonIgnore
+    @OneToMany(mappedBy = "product")
+    private List<Image> list_Images;
 
 }
