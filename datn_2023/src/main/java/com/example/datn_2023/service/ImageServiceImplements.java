@@ -1,10 +1,13 @@
 package com.example.datn_2023.service;
 
+import com.example.datn_2023.config.exception.ErrorCode;
+import com.example.datn_2023.config.exception.ServerException;
 import com.example.datn_2023.entity.Image;
 import com.example.datn_2023.respository.ImageRepsitory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class ImageServiceImplements implements IImageService{
+public class ImageServiceImplements implements IImageService {
     @Autowired
     private ImageRepsitory imageRepsitory;
 
@@ -29,39 +32,31 @@ public class ImageServiceImplements implements IImageService{
     private String uploadDir;
 
     @Override
-    public Image addImage(Image image) {
-        if(image !=null){
-            return imageRepsitory.save(image);
+    public Image saveImage(Long id, Image image) {
+        if (image == null) {
+            throw new ServerException("No body", HttpStatus.BAD_REQUEST);
         }
-        return null;
+        return imageRepsitory
+                .findById(id == null ? -1 : id)
+                .map(img -> {
+                    img.setIsDelete(image.getIsDelete());
+                    img.setName(image.getName());
+                    img.setUrl(image.getUrl());
+                    img.setProduct(image.getProduct());
+                    return imageRepsitory.save(img);
+                })
+                .orElseGet(() -> imageRepsitory.save(image));
     }
 
     @Override
-    public Image updateImage(Long id, Image image) {
-        if(image != null){
-            Image image1 = imageRepsitory.getById(id);
-            if(image1 != null) {
-                image1.setIsDelete(image.getIsDelete());
-                image1.setName(image.getName());
-                image1.setUrl(image.getUrl());
-                image1.setProduct(image.getProduct());
-                return imageRepsitory.save(image1);
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public boolean deleteImage(Long id) {
-        if(id >=1){
-            Image image= imageRepsitory.getById(id);
-            if(image != null){
-                image.setIsDelete(true);
-                imageRepsitory.save(image);
-                return true;
-            }
-        }
-        return false;
+    public Image deleteImage(Long id) {
+        return imageRepsitory
+                .findById(id)
+                .map(img -> {
+                    img.setIsDelete(true);
+                    return imageRepsitory.save(img);
+                })
+                .orElseGet(() -> null);
     }
 
     @Override
@@ -71,7 +66,9 @@ public class ImageServiceImplements implements IImageService{
 
     @Override
     public Image getOneImage(Long id) {
-        return imageRepsitory.getById(id);
+        return imageRepsitory
+                .findById(id)
+                .orElseThrow(() -> new ServerException("Image not found", HttpStatus.NOT_FOUND));
     }
 
     @Override
@@ -99,7 +96,8 @@ public class ImageServiceImplements implements IImageService{
     }
 
     public void receiveFile(OutputStream out, String... fileNames) {
-        String fullPath = uploadDir + "/" + String.join("/", fileNames);;
+        String fullPath = uploadDir + "/" + String.join("/", fileNames);
+        ;
         try {
             this.writeToByte(out, fullPath);
         } catch (IOException e) {
