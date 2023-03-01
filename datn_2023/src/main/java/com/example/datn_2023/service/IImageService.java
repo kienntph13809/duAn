@@ -8,17 +8,17 @@ import java.util.List;
 
 public interface IImageService {
     //delete image
-    public Image deleteImage(Long id);
+    List<Image> deleteImageByProduct(Image productId);
 
     //getAllImage
-    public List<Image> getAllImage();
+    List<Image> getAllImage();
 
     //getOneImage
-    public Image getOneImage(Long id);
+    Image getOneImage(Long id);
 
     List<String> uploads(MultipartFile[] files);
 
     void receiveFile(OutputStream out, String[] names);
 
-    Image saveImage(Long id, Image image);
+    Image saveImage(Image image);
 }

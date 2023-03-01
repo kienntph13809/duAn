@@ -1,6 +1,5 @@
 package com.example.datn_2023.service;
 
-import com.example.datn_2023.config.exception.ErrorCode;
 import com.example.datn_2023.config.exception.ServerException;
 import com.example.datn_2023.entity.Image;
 import com.example.datn_2023.respository.ImageRepsitory;
@@ -32,12 +31,12 @@ public class ImageServiceImplements implements IImageService {
     private String uploadDir;
 
     @Override
-    public Image saveImage(Long id, Image image) {
+    public Image saveImage(Image image) {
         if (image == null) {
             throw new ServerException("No body", HttpStatus.BAD_REQUEST);
         }
         return imageRepsitory
-                .findById(id == null ? -1 : id)
+                .findById(image.getId() == null ? -1 : image.getId())
                 .map(img -> {
                     img.setIsDelete(image.getIsDelete());
                     img.setName(image.getName());
@@ -49,14 +48,16 @@ public class ImageServiceImplements implements IImageService {
     }
 
     @Override
-    public Image deleteImage(Long id) {
-        return imageRepsitory
-                .findById(id)
-                .map(img -> {
-                    img.setIsDelete(true);
-                    return imageRepsitory.save(img);
-                })
-                .orElseGet(() -> null);
+    public List<Image> deleteImageByProduct(Image image) {
+        return imageRepsitory.saveAll(
+                imageRepsitory
+                        .findByProductId(image.getProduct().getId())
+                        .stream()
+                        .peek(img -> {
+                            img.setIsDelete(true);
+                        })
+                        .collect(Collectors.toList())
+        );
     }
 
     @Override

@@ -29,15 +29,15 @@ public class ImageController {
      * @param image: request body
      * @return saved image
      */
-    @PostMapping({"/save", "/save/{id}"})
-    public ResponseEntity<Image> saveImage(@PathVariable(required = false) Long id, @RequestBody(required = false) Image image) {
-        return ResponseEntity.ok(iImageService.saveImage(id, image));
+    @PostMapping("/save")
+    public ResponseEntity<Image> saveImage(@RequestBody(required = false) Image image) {
+        return ResponseEntity.ok(iImageService.saveImage(image));
     }
 
     //delete Image
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Image> deleteImage(@PathVariable("id") long id) {
-        return ResponseEntity.ok(iImageService.deleteImage(id));
+    @PutMapping("/delete-by-product")
+    public ResponseEntity<?> deleteImageByProduct(@RequestBody Image image) {
+        return ResponseEntity.ok(iImageService.deleteImageByProduct(image));
     }
 
     @GetMapping("/list")
