@@ -1,8 +1,10 @@
 package com.example.datn_2023.service;
 
 import com.example.datn_2023.config.exception.ServerException;
+import com.example.datn_2023.dto.ImageDTO;
 import com.example.datn_2023.entity.Image;
 import com.example.datn_2023.respository.ImageRepsitory;
+import com.example.datn_2023.util.MapperUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,8 +32,12 @@ public class ImageServiceImplements implements IImageService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    @Value("${link.base-url}")
+    private String baseUrl;
+
     @Override
-    public Image saveImage(Image image) {
+    @Deprecated
+    public Image saveImage(ImageDTO image) {
         if (image == null) {
             throw new ServerException("No body", HttpStatus.BAD_REQUEST);
         }
@@ -44,31 +50,54 @@ public class ImageServiceImplements implements IImageService {
                     img.setProduct(image.getProduct());
                     return imageRepsitory.save(img);
                 })
-                .orElseGet(() -> imageRepsitory.save(image));
+                .orElseGet(() -> imageRepsitory.save(MapperUtil.map(image, Image.class)));
     }
 
     @Override
-    public List<Image> deleteImageByProduct(Image image) {
-        return imageRepsitory.saveAll(
-                imageRepsitory
-                        .findByProductId(image.getProduct().getId())
-                        .stream()
-                        .peek(img -> {
-                            img.setIsDelete(true);
-                        })
-                        .collect(Collectors.toList())
+    public Image saveImage(MultipartFile file, ImageDTO image) {
+        if (image == null) {
+            throw new ServerException("No body", HttpStatus.BAD_REQUEST);
+        }
+        String url = this.saveFileToDisk(file);
+        return imageRepsitory
+                .findById(image.getId() == null ? -1 : image.getId())
+                .map(img -> {
+                    img.setIsDelete(image.getIsDelete());
+                    img.setName(image.getName());
+                    img.setUrl(this.baseUrl + "/image/files/" + url);
+                    img.setProduct(image.getProduct());
+                    return imageRepsitory.save(img);
+                })
+                .orElseGet(() -> {
+                    image.setUrl(this.baseUrl + "/image/files/" + url);
+                    return imageRepsitory.save(MapperUtil.map(image, Image.class));
+                });
+    }
+
+    @Override
+    public List<ImageDTO> deleteImageByProduct(ImageDTO image) {
+        return MapperUtil.mapList(imageRepsitory.saveAll(
+                        imageRepsitory
+                                .findByProductId(image.getProduct().getId())
+                                .stream()
+                                .peek(img -> {
+                                    img.setIsDelete(true);
+                                })
+                                .collect(Collectors.toList())),
+                ImageDTO.class
         );
     }
 
     @Override
-    public List<Image> getAllImage() {
-        return imageRepsitory.findAll();
+    public List<ImageDTO> getAllImage() {
+        return MapperUtil.mapList(imageRepsitory.findAll(), ImageDTO.class);
     }
 
     @Override
-    public Image getOneImage(Long id) {
+    public ImageDTO getOneImage(Long id) {
         return imageRepsitory
                 .findById(id)
+                .map(img -> MapperUtil.map(img, ImageDTO.class))
                 .orElseThrow(() -> new ServerException("Image not found", HttpStatus.NOT_FOUND));
     }
 
@@ -98,7 +127,6 @@ public class ImageServiceImplements implements IImageService {
 
     public void receiveFile(OutputStream out, String... fileNames) {
         String fullPath = uploadDir + "/" + String.join("/", fileNames);
-        ;
         try {
             this.writeToByte(out, fullPath);
         } catch (IOException e) {
